@@ -1,5 +1,5 @@
 Name:                zenc
-Version:             0.1.0
+Version:             0.1.1
 Synopsis:            GHC style name Z-encoding and Z-decoding
 Description:         Implements GHC's name mangling.  This code was taken
                      directly from the GHC source.
