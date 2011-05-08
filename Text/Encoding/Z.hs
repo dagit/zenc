@@ -1,3 +1,46 @@
+{- | The Z-encoding
+
+This is the main name-encoding and decoding function.  It encodes any
+string into a string that is acceptable as a C name.  This is done
+right before we emit a symbol name into the compiled C or asm code.
+Z-encoding of strings is cached in the FastString interface, so we
+never encode the same string more than once.
+
+The basic encoding scheme is this.
+
+  * Tuples (,,,) are coded as Z3T
+
+  * Alphabetic characters (upper and lower) and digits
+        all translate to themselves;
+        except 'Z', which translates to 'ZZ'
+        and    'z', which translates to 'zz'
+  We need both so that we can preserve the variable/tycon distinction
+
+  * Most other printable characters translate to 'zx' or 'Zx' for some
+        alphabetic character x
+
+  * The others translate as 'znnnU' where 'nnn' is the decimal number
+        of the character
+
+@
+        Before          After
+        --------------------------
+        Trak            Trak
+        foo_wib         foozuwib
+        \>               zg
+        \>1              zg1
+        foo\#            foozh
+        foo\#\#           foozhzh
+        foo\#\#1          foozhzh1
+        fooZ            fooZZ
+        :+              ZCzp
+        ()              Z0T     0-tuple
+        (,,,,)          Z5T     5-tuple
+        (\# \#)           Z1H     unboxed 1-tuple (note the space)
+        (\#,,,,\#)        Z5H     unboxed 5-tuple
+                (NB: There is no Z1T nor Z0H.)
+@
+-}
 module Text.Encoding.Z (
   zEncodeString,
   zDecodeString,
@@ -7,50 +50,6 @@ module Text.Encoding.Z (
 
 import Data.Char
 import Numeric
-
--- -----------------------------------------------------------------------------
--- The Z-encoding
-
-{-
-This is the main name-encoding and decoding function.  It encodes any
-string into a string that is acceptable as a C name.  This is done
-right before we emit a symbol name into the compiled C or asm code.
-Z-encoding of strings is cached in the FastString interface, so we
-never encode the same string more than once.
-
-The basic encoding scheme is this.
-
-* Tuples (,,,) are coded as Z3T
-
-* Alphabetic characters (upper and lower) and digits
-        all translate to themselves;
-        except 'Z', which translates to 'ZZ'
-        and    'z', which translates to 'zz'
-  We need both so that we can preserve the variable/tycon distinction
-
-* Most other printable characters translate to 'zx' or 'Zx' for some
-        alphabetic character x
-
-* The others translate as 'znnnU' where 'nnn' is the decimal number
-        of the character
-
-        Before          After
-        --------------------------
-        Trak            Trak
-        foo_wib         foozuwib
-        >               zg
-        >1              zg1
-        foo#            foozh
-        foo##           foozhzh
-        foo##1          foozhzh1
-        fooZ            fooZZ
-        :+              ZCzp
-        ()              Z0T     0-tuple
-        (,,,,)          Z5T     5-tuple
-        (# #)           Z1H     unboxed 1-tuple (note the space)
-        (#,,,,#)        Z5H     unboxed 5-tuple
-                (NB: There is no Z1T nor Z0H.)
--}
 
 type UserString = String        -- As the user typed it
 type EncodedString = String     -- Encoded form
