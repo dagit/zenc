@@ -10,7 +10,7 @@ Maintainer:          dagitj@gmail.com
 Copyright:           GHC HQ
 Category:            Text
 Build-type:          Simple
-Cabal-version:       >=1.8
+Cabal-version:       >=1.10
 
 Library
   -- Modules exported by the library.
@@ -19,6 +19,7 @@ Library
   -- Packages needed in order to build this package.
   Build-depends:       base >= 3 && <= 5
   GHC-options:         -O2
+  default-language:    Haskell2010
 
   -- Modules not exported by this package.
   -- Other-modules:
@@ -34,6 +35,7 @@ test-suite tests
    build-depends:       hedgehog == 1.0.*
    build-depends:       hspec == 2.8.*
    build-depends:       hspec-hedgehog == 0.0.*
+   default-language:    Haskell2010
 
 source-repository this
   type: git
