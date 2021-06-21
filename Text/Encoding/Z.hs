@@ -1,45 +1,13 @@
+{-# LANGUAGE Safe #-}
 {- | The Z-encoding
 
 This is the main name-encoding and decoding function.  It encodes any
-string into a string that is acceptable as a C name.  This is done
-right before we emit a symbol name into the compiled C or asm code.
-Z-encoding of strings is cached in the FastString interface, so we
-never encode the same string more than once.
+string into a string that is acceptable as a C name.  This is code was
+originally part of GHC and used right before emitting a symbol name
+into the compiled C or asm code. This library was created as this
+encoding is useful when working with GHC compiled code or generally
+when C-compatible name mangling is desired.
 
-The basic encoding scheme is this.
-
-  * Tuples (,,,) are coded as Z3T
-
-  * Alphabetic characters (upper and lower) and digits
-        all translate to themselves;
-        except 'Z', which translates to 'ZZ'
-        and    'z', which translates to 'zz'
-  We need both so that we can preserve the variable/tycon distinction
-
-  * Most other printable characters translate to 'zx' or 'Zx' for some
-        alphabetic character x
-
-  * The others translate as 'znnnU' where 'nnn' is the decimal number
-        of the character
-
-@
-        Before          After
-        --------------------------
-        Trak            Trak
-        foo_wib         foozuwib
-        \>               zg
-        \>1              zg1
-        foo\#            foozh
-        foo\#\#           foozhzh
-        foo\#\#1          foozhzh1
-        fooZ            fooZZ
-        :+              ZCzp
-        ()              Z0T     0-tuple
-        (,,,,)          Z5T     5-tuple
-        (\# \#)           Z1H     unboxed 1-tuple (note the space)
-        (\#,,,,\#)        Z5H     unboxed 5-tuple
-                (NB: There is no Z1T nor Z0H.)
-@
 -}
 module Text.Encoding.Z (
   zEncodeString,
@@ -51,10 +19,43 @@ module Text.Encoding.Z (
 import Data.Char
 import Numeric
 
-type UserString = String        -- As the user typed it
-type EncodedString = String     -- Encoded form
+type UserString = String        -- ^ As the user typed it
+type EncodedString = String     -- ^ Encoded form
 
-
+-- | The basic encoding scheme is this:
+--
+--   * Tuples (,,,) are coded as Z3T
+--
+--   * Alphabetic characters (upper and lower) and digits
+--         all translate to themselves;
+--         except 'Z', which translates to 'ZZ'
+--         and    'z', which translates to 'zz'
+--   We need both so that we can preserve the variable/tycon distinction
+--
+--   * Most other printable characters translate to 'zx' or 'Zx' for some
+--         alphabetic character x
+--
+--   * The others translate as 'znnnU' where 'nnn' is the decimal number
+--         of the character
+--
+-- @
+--         Before          After
+--         --------------------------
+--         Trak            Trak
+--         foo_wib         foozuwib
+--         \>               zg
+--         \>1              zg1
+--         foo\#            foozh
+--         foo\#\#           foozhzh
+--         foo\#\#1          foozhzh1
+--         fooZ            fooZZ
+--         :+              ZCzp
+--         ()              Z0T     0-tuple
+--         (,,,,)          Z5T     5-tuple
+--         (\# \#)           Z1H     unboxed 1-tuple (note the space)
+--         (\#,,,,\#)        Z5H     unboxed 5-tuple
+--                 (NB: There is no Z1T nor Z0H.)
+-- @
 zEncodeString :: UserString -> EncodedString
 zEncodeString cs = case maybe_tuple cs of
                 Just n  -> n            -- Tuples go to Z2T etc
@@ -119,6 +120,7 @@ encode_as_unicode_char c = 'z' : if isDigit (head hex_str) then hex_str
   -- eg. strings of unicode characters come out as 'z1234Uz5678U', we
   -- could remove the 'U' in the middle (the 'z' works as a separator).
 
+-- | The inverse of 'zEncodeString'
 zDecodeString :: EncodedString -> UserString
 zDecodeString [] = []
 zDecodeString ('Z' : d : rest)
