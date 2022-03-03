@@ -36,7 +36,7 @@ test-suite tests
    other-modules:       Text.Encoding.Z
    build-depends:       base >= 3 && <= 5
    build-depends:       hedgehog == 1.0.*
-   build-depends:       hspec == 2.8.*
+   build-depends:       hspec >= 2.8 && <= 2.10
    build-depends:       hspec-hedgehog == 0.0.*
    default-language:    Haskell2010
 
